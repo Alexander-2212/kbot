@@ -1,71 +1,83 @@
 APP        ?= kbot
-REGISTRY   ?= sashgun22
-VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+# Реєстр і репозиторій образу: ghcr.io/<owner>/<app> (ghcr вимагає нижній регістр)
+REGISTRY   ?= ghcr.io
+OWNER      ?= alexander-2212
+REPOSITORY ?= $(OWNER)/$(APP)
+
+# Версія = <реліз>-<короткий SHA коміту>, напр. v1.0.0-106879e
+RELEASE    ?= v1.0.0
+COMMIT     ?= $(shell git rev-parse --short=7 HEAD 2>/dev/null || echo dev)
+VERSION    ?= $(RELEASE)-$(COMMIT)
+
+# Цільова платформа
 TARGETOS   ?= linux
-ARCH       ?= amd64
-ARCHS      ?= amd64 arm64
+TARGETARCH ?= amd64
+
+# Повне посилання на образ: ghcr.io/alexander-2212/kbot:v1.0.0-106879e-linux-amd64
+IMAGE       = $(REGISTRY)/$(REPOSITORY):$(VERSION)-$(TARGETOS)-$(TARGETARCH)
+
 CHART_DIR  ?= helm/kbot
+VALUES     ?= $(CHART_DIR)/values.yaml
 DIST       ?= dist
 
-.PHONY: help format test build linux arm macos windows all image image-all push push-all helm-lint helm-package clean
+.PHONY: help format vet test build image push image-push update-helm helm-lint helm-package image-name clean
 
 help:
-	@echo "Збірка:    build linux arm macos windows all"
-	@echo "Якість:    format test"
-	@echo "Образи:    image [ARCH=amd64|arm64] image-all push push-all"
-	@echo "Helm:      helm-lint helm-package"
-	@echo "Змінні:    APP=$(APP) REGISTRY=$(REGISTRY) VERSION=$(VERSION) ARCHS='$(ARCHS)'"
+	@echo "Якість:    format vet test"
+	@echo "Збірка:    build image push image-push"
+	@echo "Helm:      update-helm helm-lint helm-package"
+	@echo "Сервісне:  image-name clean"
+	@echo "Змінні:    APP=$(APP) REGISTRY=$(REGISTRY) REPOSITORY=$(REPOSITORY)"
+	@echo "           VERSION=$(VERSION) TARGETOS=$(TARGETOS) TARGETARCH=$(TARGETARCH)"
+	@echo "Образ:     $(IMAGE)"
+
+# Вивести посилання на образ (використовується у CI та як відповідь на завдання)
+image-name:
+	@echo $(IMAGE)
 
 format:
 	gofmt -s -w .
 
+vet:
+	go vet ./...
+
 test:
 	go test ./...
 
-# Бінарник під поточну платформу
+# Бінарник під цільову платформу
 build:
-	CGO_ENABLED=0 go build -trimpath \
+	CGO_ENABLED=0 GOOS=$(TARGETOS) GOARCH=$(TARGETARCH) go build -trimpath \
 		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
 		-o $(APP) .
 
-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
-		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
-		-o $(APP)-linux-amd64 .
-
-arm:
-	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath \
-		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
-		-o $(APP)-linux-arm64 .
-
-macos:
-	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath \
-		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
-		-o $(APP)-darwin-arm64 .
-
-windows:
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath \
-		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
-		-o $(APP)-windows-amd64.exe .
-
-all: linux arm macos windows
-
-# Образ під одну архітектуру: make image ARCH=arm64
+# Образ під цільову платформу
 image:
 	docker buildx build \
-		--platform $(TARGETOS)/$(ARCH) \
+		--platform $(TARGETOS)/$(TARGETARCH) \
 		--build-arg VERSION=$(VERSION) \
-		-t $(REGISTRY)/$(APP):$(VERSION)-$(ARCH) \
+		-t $(IMAGE) \
 		--load .
 
-image-all:
-	@for a in $(ARCHS); do $(MAKE) image ARCH=$$a || exit 1; done
-
 push:
-	docker push $(REGISTRY)/$(APP):$(VERSION)-$(ARCH)
+	docker push $(IMAGE)
 
-push-all:
-	@for a in $(ARCHS); do $(MAKE) push ARCH=$$a || exit 1; done
+# Зібрати і одразу запушити (у CI зручніше одним кроком)
+image-push:
+	docker buildx build \
+		--platform $(TARGETOS)/$(TARGETARCH) \
+		--build-arg VERSION=$(VERSION) \
+		-t $(IMAGE) \
+		--push .
+
+# Оновити тег/координати образу в helm-чарті - це і є GitOps-комміт для ArgoCD
+update-helm:
+	sed -i -e "s|^  registry: .*|  registry: \"$(REGISTRY)\"|" \
+	       -e "s|^  repository: .*|  repository: \"$(REPOSITORY)\"|" \
+	       -e "s|^  tag: .*|  tag: \"$(VERSION)\"|" \
+	       -e "s|^  os: .*|  os: $(TARGETOS)|" \
+	       -e "s|^  arch: .*|  arch: $(TARGETARCH)|" \
+	       $(VALUES)
+	@echo "оновлено $(VALUES) -> $(IMAGE)"
 
 helm-lint:
 	helm lint $(CHART_DIR) --set tele.token=dummy
@@ -77,4 +89,4 @@ helm-package: helm-lint
 clean:
 	rm -f $(APP) $(APP)-*
 	rm -rf $(DIST)
-	-docker rmi $(foreach a,$(ARCHS),$(REGISTRY)/$(APP):$(VERSION)-$(a))
+	-docker rmi $(IMAGE)

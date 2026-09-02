@@ -1,0 +1,48 @@
+# ArgoCD Application: слідкує за helm-чартом у гілці develop цього ж репозиторію.
+# Workflow оновлює image.tag у helm/kbot/values.yaml -> ArgoCD бачить новий комміт
+# і сам розгортає нову версію бота в кластері.
+#
+# Перед першим синком створіть секрет із токеном бота (у git він не зберігається):
+#   kubectl create namespace kbot
+#   kubectl -n kbot create secret generic kbot-token --from-literal=token=<TELE_TOKEN>
+#
+# Застосувати:
+#   kubectl apply -f argocd/kbot-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kbot
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Alexander-2212/kbot.git
+    targetRevision: develop
+    path: helm/kbot
+    helm:
+      releaseName: kbot
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kbot
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  revisionHistoryLimit: 5

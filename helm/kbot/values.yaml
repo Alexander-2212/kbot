@@ -2,10 +2,13 @@
 replicaCount: 1
 
 image:
-  # Репозиторій образу; повне імʼя збирається як
-  # <repository>/<chart name>:<tag>-<arch>
-  repository: sashgun22
-  tag: v1.0.1
+  # Повне посилання на образ збирається як
+  # <registry>/<repository>:<tag>-<os>-<arch>
+  # напр. ghcr.io/alexander-2212/kbot:v1.0.0-69bd12e-linux-amd64
+  registry: "ghcr.io"
+  repository: "alexander-2212/kbot"
+  tag: "v1.0.0-69bd12e"
+  os: linux
   arch: amd64
   pullPolicy: IfNotPresent
 
@@ -21,7 +24,7 @@ tele:
   # Альтернатива: імʼя вже наявного Secret у кластері
   #   kubectl create secret generic kbot-token --from-literal=token=<TELE_TOKEN>
   #   helm install kbot <chart> --set tele.existingSecret=kbot-token
-  existingSecret: ""
+  existingSecret: "kbot-token"
   # Ключ усередині Secret, у якому лежить токен
   secretKey: token
 

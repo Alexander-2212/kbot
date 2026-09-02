@@ -1,0 +1,116 @@
+name: CI/CD kbot
+
+# CI/CD стартує на кожен push у гілку develop основного коду.
+# Зміни самого чарту (їх робить цей же workflow) новий запуск не викликають.
+on:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - 'helm/**'
+      - 'argocd/**'
+      - '**.md'
+      - '.gitignore'
+      - '.dockerignore'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  RELEASE: v1.0.0
+  TARGETOS: linux
+  TARGETARCH: amd64
+
+# Паралельні запуски на одній гілці не мають конфліктувати за git push
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Build, push image and bump helm tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # комміт нового тегу в helm/kbot/values.yaml
+      packages: write   # публікація образу в ghcr.io
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Compute image coordinates
+        id: meta
+        run: |
+          REPOSITORY="$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          VERSION="${RELEASE}-$(git rev-parse --short=7 HEAD)"
+          IMAGE="${REGISTRY}/${REPOSITORY}:${VERSION}-${TARGETOS}-${TARGETARCH}"
+          echo "repository=${REPOSITORY}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"       >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE}"           >> "$GITHUB_OUTPUT"
+          echo "### Image: \`${IMAGE}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Lint (go vet)
+        run: make vet
+
+      - name: Test
+        run: make test
+
+      - name: Build binary
+        run: |
+          make build \
+            REPOSITORY=${{ steps.meta.outputs.repository }} \
+            VERSION=${{ steps.meta.outputs.version }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ env.TARGETOS }}/${{ env.TARGETARCH }}
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.image }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            TARGETOS=${{ env.TARGETOS }}
+            TARGETARCH=${{ env.TARGETARCH }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Bump image tag in helm chart
+        run: |
+          make update-helm \
+            REPOSITORY=${{ steps.meta.outputs.repository }} \
+            VERSION=${{ steps.meta.outputs.version }}
+          git diff --stat
+
+      - name: Commit updated values.yaml
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- helm/kbot/values.yaml; then
+            echo "helm/kbot/values.yaml вже містить актуальний тег - комміт не потрібен"
+            exit 0
+          fi
+          git add helm/kbot/values.yaml
+          git commit -m "ci: bump image tag to ${{ steps.meta.outputs.version }} [skip ci]"
+          git pull --rebase origin develop
+          git push origin HEAD:develop
