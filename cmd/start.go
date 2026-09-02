@@ -47,10 +47,12 @@ func textHandler(m telebot.Context) error {
 		return m.Send(fmt.Sprintf("Hello, %s! I'm kbot %s", m.Sender().FirstName, appVersion))
 	case "/version", "version":
 		return m.Send(appVersion)
+	case "/ping", "ping":
+		return m.Send("pong")
 	case "/time", "time":
 		return m.Send(time.Now().Format(time.RFC1123))
 	case "/help", "help":
-		return m.Send("Available commands:\nhello — greeting\nversion — bot version\ntime — current server time\nhelp — this message")
+		return m.Send("Available commands:\nhello — greeting\nping — pong\nversion — bot version\ntime — current server time\nhelp — this message")
 	default:
 		return m.Send(fmt.Sprintf("Unknown command: %q\nTry /help", payload))
 	}
