@@ -1,0 +1,15 @@
+Чарт {{ .Chart.Name }}-{{ .Chart.Version }} встановлено як реліз "{{ .Release.Name }}" у namespace "{{ .Release.Namespace }}".
+
+Образ:  {{ .Values.image.repository }}/{{ .Chart.Name }}:{{ .Values.image.tag }}-{{ .Values.image.arch | default "amd64" }}
+Токен:  Secret "{{ include "kbot.secretName" . }}" (ключ {{ .Values.tele.secretKey }}) -> змінна TELE_TOKEN
+
+Перевірити стан:
+
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+  kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/instance={{ .Release.Name }} -f
+
+У логах має зʼявитись рядок "authorized as @<bot_username>". Після цього напишіть боту "hello" у Telegram.
+
+Видалити реліз:
+
+  helm -n {{ .Release.Namespace }} uninstall {{ .Release.Name }}

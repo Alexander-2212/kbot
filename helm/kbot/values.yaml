@@ -1,0 +1,53 @@
+# Кількість реплік бота (long polling - тримаємо строго одну)
+replicaCount: 1
+
+image:
+  # Репозиторій образу; повне імʼя збирається як
+  # <repository>/<chart name>:<tag>-<arch>
+  repository: sashgun22
+  tag: v1.0.1
+  arch: amd64
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Секція токена Telegram-бота (TELE_TOKEN)
+tele:
+  # Значення токена. Якщо задане - чарт створює Secret самостійно:
+  #   helm install kbot <chart> --set tele.token=<TELE_TOKEN>
+  token: ""
+  # Альтернатива: імʼя вже наявного Secret у кластері
+  #   kubectl create secret generic kbot-token --from-literal=token=<TELE_TOKEN>
+  #   helm install kbot <chart> --set tele.existingSecret=kbot-token
+  existingSecret: ""
+  # Ключ усередині Secret, у якому лежить токен
+  secretKey: token
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

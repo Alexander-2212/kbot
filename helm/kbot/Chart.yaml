@@ -1,0 +1,21 @@
+apiVersion: v2
+name: kbot
+description: Helm chart for kbot - Telegram bot written in Go (GlobalLogic DEVOPS101, Module 5)
+type: application
+
+# Версія чарту
+version: 1.0.1
+
+# Версія застосунку (тег образу за замовчуванням)
+appVersion: "v1.0.1"
+
+home: https://github.com/Alexander-2212/kbot
+sources:
+  - https://github.com/Alexander-2212/kbot
+  - https://github.com/Alexander-2212/devops101-m05-p05
+keywords:
+  - telegram
+  - bot
+  - golang
+maintainers:
+  - name: Alexander-2212

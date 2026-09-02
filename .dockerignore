@@ -1,0 +1,9 @@
+.git
+.github
+dist
+helm
+kbot
+kbot-*
+*.tgz
+.env
+README.md
