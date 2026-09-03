@@ -1,5 +1,5 @@
 # ArgoCD Application: слідкує за helm-чартом у гілці develop цього ж репозиторію.
-# Workflow оновлює image.tag у helm/kbot/values.yaml -> ArgoCD бачить новий комміт
+# Workflow оновлює image.tag у helm/values.yaml -> ArgoCD бачить новий комміт
 # і сам розгортає нову версію бота в кластері.
 #
 # Перед першим синком створіть секрет із токеном бота (у git він не зберігається):
@@ -21,7 +21,7 @@ spec:
   source:
     repoURL: https://github.com/Alexander-2212/kbot.git
     targetRevision: develop
-    path: helm/kbot
+    path: helm
     helm:
       releaseName: kbot
       valueFiles:

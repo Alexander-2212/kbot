@@ -16,7 +16,7 @@ TARGETARCH ?= amd64
 # Повне посилання на образ: ghcr.io/alexander-2212/kbot:v1.0.0-106879e-linux-amd64
 IMAGE       = $(REGISTRY)/$(REPOSITORY):$(VERSION)-$(TARGETOS)-$(TARGETARCH)
 
-CHART_DIR  ?= helm/kbot
+CHART_DIR  ?= helm
 VALUES     ?= $(CHART_DIR)/values.yaml
 DIST       ?= dist
 

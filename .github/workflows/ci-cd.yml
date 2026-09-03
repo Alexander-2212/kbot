@@ -30,7 +30,7 @@ jobs:
     name: Build, push image and bump helm tag
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # комміт нового тегу в helm/kbot/values.yaml
+      contents: write   # комміт нового тегу в helm/values.yaml
       packages: write   # публікація образу в ghcr.io
 
     steps:
@@ -116,11 +116,11 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- helm/kbot/values.yaml; then
-            echo "helm/kbot/values.yaml вже містить актуальний тег - комміт не потрібен"
+          if git diff --quiet -- helm/values.yaml; then
+            echo "helm/values.yaml вже містить актуальний тег - комміт не потрібен"
             exit 0
           fi
-          git add helm/kbot/values.yaml
+          git add helm/values.yaml
           git commit -m "ci: bump image tag to ${{ steps.meta.outputs.version }} [skip ci]"
           git pull --rebase origin develop
           git push origin HEAD:develop

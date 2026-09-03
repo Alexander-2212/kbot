@@ -37,9 +37,9 @@ flowchart TD
     end
 
     img -->|push| ghcr[("ghcr.io/alexander-2212/kbot<br/>:v1.0.0-&lt;sha&gt;-linux-amd64")]
-    commit --> chart["helm/kbot/values.yaml<br/>image.tag оновлено"]
+    commit --> chart["helm/values.yaml<br/>image.tag оновлено"]
 
-    chart -->|"polling / webhook"| argo["ArgoCD Application<br/>path: helm/kbot, revision: develop"]
+    chart -->|"polling / webhook"| argo["ArgoCD Application<br/>path: helm, revision: develop"]
     argo -->|"auto-sync, self-heal"| k8s
 
     subgraph k8s["Kubernetes - namespace kbot"]
@@ -65,7 +65,7 @@ flowchart TD
 | Платформа / архітектура | `linux` / `amd64` |
 
 Результуючий образ: `ghcr.io/alexander-2212/kbot:v1.0.0-<short-sha>-linux-amd64`,
-що відповідає полям `image` у [`helm/kbot/values.yaml`](helm/kbot/values.yaml):
+що відповідає полям `image` у [`helm/values.yaml`](helm/values.yaml):
 
 ```yaml
 image:
@@ -85,7 +85,7 @@ image:
 5. Логін у `ghcr.io` вбудованим `GITHUB_TOKEN` (`packages: write`).
 6. `docker/build-push-action` - збірка образу з `Dockerfile` і публікація тегу
    `v1.0.0-<sha>-linux-amd64`.
-7. `make update-helm` - оновлення `image.*` у `helm/kbot/values.yaml`.
+7. `make update-helm` - оновлення `image.*` у `helm/values.yaml`.
 8. Комміт і `push` оновленого чарту назад у `develop`.
 
 Комміт від `GITHUB_TOKEN` не запускає workflow повторно; додатково гілки чарту
@@ -138,7 +138,7 @@ make helm-lint     # helm lint
 ## Ручне встановлення чарту (без ArgoCD)
 
 ```bash
-helm upgrade --install kbot helm/kbot   --namespace kbot --create-namespace   --set tele.existingSecret=kbot-token
+helm upgrade --install kbot helm   --namespace kbot --create-namespace   --set tele.existingSecret=kbot-token
 ```
 
 Основні параметри:
