@@ -95,7 +95,8 @@ pipeline {
             when { expression { !params.SKIP_LINT } }
             steps {
                 sh '''
-                    unformatted="$(gofmt -l .)"
+                    # лише файли проєкту: кеш модулів у $GOMODCACHE лежить усередині workspace
+                    unformatted="$(gofmt -l $(git ls-files '*.go'))"
                     if [ -n "$unformatted" ]; then
                         echo "gofmt: файли не відформатовано:"; echo "$unformatted"; exit 1
                     fi
@@ -168,7 +169,7 @@ pipeline {
                  (params.BUILD_IMAGE && params.OS == 'linux' ? ", образ ${env.IMAGE}" : '')
         }
         failure {
-            echo "FAILED: ${env.VERSION} ${env.TARGETOS}/${env.TARGETARCH} (stage: ${env.STAGE_NAME})"
+            echo "FAILED: ${env.VERSION} ${env.TARGETOS}/${env.TARGETARCH}"
         }
     }
 }
