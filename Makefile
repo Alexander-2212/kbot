@@ -1,4 +1,6 @@
 APP        ?= kbot
+# Ім'я вихідного бінарника (Jenkins передає kbot-<os>-<arch>[.exe])
+BIN        ?= $(APP)
 # Реєстр і репозиторій образу: ghcr.io/<owner>/<app> (ghcr вимагає нижній регістр)
 REGISTRY   ?= ghcr.io
 OWNER      ?= alexander-2212
@@ -28,7 +30,7 @@ help:
 	@echo "Helm:      update-helm helm-lint helm-package"
 	@echo "Сервісне:  image-name clean"
 	@echo "Змінні:    APP=$(APP) REGISTRY=$(REGISTRY) REPOSITORY=$(REPOSITORY)"
-	@echo "           VERSION=$(VERSION) TARGETOS=$(TARGETOS) TARGETARCH=$(TARGETARCH)"
+	@echo "           VERSION=$(VERSION) TARGETOS=$(TARGETOS) TARGETARCH=$(TARGETARCH) BIN=$(BIN)"
 	@echo "Образ:     $(IMAGE)"
 
 # Вивести посилання на образ (використовується у CI та як відповідь на завдання)
@@ -48,7 +50,7 @@ test:
 build:
 	CGO_ENABLED=0 GOOS=$(TARGETOS) GOARCH=$(TARGETARCH) go build -trimpath \
 		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
-		-o $(APP) .
+		-o $(BIN) .
 
 # Образ під цільову платформу
 image:
@@ -87,6 +89,6 @@ helm-package: helm-lint
 	helm package $(CHART_DIR) -d $(DIST)
 
 clean:
-	rm -f $(APP) $(APP)-*
+	rm -f $(APP) $(APP)-* $(BIN)
 	rm -rf $(DIST)
 	-docker rmi $(IMAGE)

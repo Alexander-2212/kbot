@@ -10,7 +10,7 @@ CI/CD-конвеєр (GitHub Actions -> ghcr.io -> ArgoCD -> Kubernetes).
 
 - [cobra](https://github.com/spf13/cobra) - CLI-фреймворк
 - [telebot.v4](https://gopkg.in/telebot.v4) - Telegram Bot API
-- GitHub Actions - CI/CD
+- GitHub Actions, Jenkins - CI/CD
 - ghcr.io - реєстр контейнерів
 - Helm + ArgoCD - GitOps-розгортання в Kubernetes
 
@@ -90,6 +90,77 @@ image:
 
 Комміт від `GITHUB_TOKEN` не запускає workflow повторно; додатково гілки чарту
 виключені через `paths-ignore: helm/**`, тож нескінченного циклу немає.
+
+## Jenkins Pipeline (параметризована мультиплатформенна збірка)
+
+Декларативний pipeline - [`pipeline/jenkins.groovy`](pipeline/jenkins.groovy)
+(RAW: <https://raw.githubusercontent.com/Alexander-2212/kbot/develop/pipeline/jenkins.groovy>).
+Агент збірки - хост/контейнер, на якому розгорнуто Jenkins (`agent any`), тому на ньому
+мають бути `go`, `make`, `git` і, для стадій `Image`/`Push`, `docker` з доступом до daemon.
+
+### Параметри збірки
+
+Розробник обирає параметри у формі *Build with Parameters* або запускає збірку
+зі значеннями за замовчуванням.
+
+| Параметр | Тип | За замовчуванням | Опис |
+|---|---|---|---|
+| `OS` | choice | `linux` | цільова ОС: `linux`, `darwin`, `windows` (GOOS) |
+| `ARCH` | choice | `amd64` | цільова архітектура: `amd64`, `arm64` (GOARCH) |
+| `SKIP_TESTS` | boolean | `false` | пропустити `make test` |
+| `SKIP_LINT` | boolean | `false` | пропустити `gofmt` + `make vet` |
+| `BUILD_IMAGE` | boolean | `false` | зібрати образ `docker buildx` (лише для `OS=linux`) |
+| `PUSH_IMAGE` | boolean | `false` | запушити образ у `ghcr.io` (credentials `ghcr-credentials`) |
+| `RELEASE` | string | `v1.0.0` | префікс версії, `VERSION = <RELEASE>-<short SHA>` |
+
+### Стадії
+
+```mermaid
+flowchart LR
+    co["Checkout<br/>git rev-parse -> VERSION"] --> lint["Lint<br/>gofmt, go vet<br/>(when !SKIP_LINT)"]
+    lint --> test["Test<br/>go test<br/>(when !SKIP_TESTS)"]
+    test --> build["Build<br/>make build BIN=kbot-OS-ARCH<br/>archiveArtifacts"]
+    build --> image["Image<br/>make image<br/>(when BUILD_IMAGE && OS=linux)"]
+    image --> push["Push<br/>docker login + make push<br/>(when PUSH_IMAGE)"]
+```
+
+Змінні `TARGETOS`, `TARGETARCH`, `RELEASE`, `REGISTRY`, `REPOSITORY` pipeline передає
+через оточення, а `Makefile` підхоплює їх оператором `?=`, тож ті самі цілі `make`
+працюють і в GitHub Actions, і в Jenkins. Бінарник отримує ім'я
+`kbot-<os>-<arch>` (для Windows - з `.exe`) і зберігається як артефакт збірки.
+
+### Локальний Jenkins
+
+Варіант із завдання - Kind + Helm:
+
+```bash
+kind create cluster --name jenkins
+helm repo add jenkinsci https://charts.jenkins.io && helm repo update
+helm install jenkins jenkinsci/jenkins
+kubectl port-forward svc/jenkins 8080:8080
+# http://localhost:8080, пароль: kubectl get secret jenkins -o jsonpath='{.data.jenkins-admin-password}' | base64 -d
+```
+
+Варіант, що використовується в цьому репозиторії, - контейнер Jenkins, який сам є агентом
+збірки: [`pipeline/jenkins/Dockerfile`](pipeline/jenkins/Dockerfile) додає до `jenkins/jenkins:lts`
+Go, `make`, docker CLI/buildx та плагіни з [`plugins.txt`](pipeline/jenkins/plugins.txt),
+а [`casc.yaml`](pipeline/jenkins/casc.yaml) (Configuration as Code + Job DSL) створює
+адміністратора і pipeline-job `kbot`, що читає `pipeline/jenkins.groovy` з гілки `develop`.
+
+```bash
+docker build -t kbot-jenkins pipeline/jenkins
+docker run -d --name kbot-jenkins -p 8081:8080 \
+  -e JENKINS_ADMIN_PASSWORD=<password> \
+  -v kbot-jenkins-home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock --group-add 0 \
+  kbot-jenkins
+# http://localhost:8081 -> job "kbot" -> Build with Parameters
+```
+
+Ручне створення job без JCasC: *New Item -> Pipeline -> Pipeline script from SCM*,
+Repository `https://github.com/Alexander-2212/kbot.git`, Branch `*/develop`,
+Script Path `pipeline/jenkins.groovy`. Після першого запуску (або *Scan*) Jenkins
+зчитує блок `parameters` і кнопка *Build Now* стає *Build with Parameters*.
 
 ## Розгортання через ArgoCD
 

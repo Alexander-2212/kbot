@@ -8,3 +8,5 @@ kbot-*
 *.tgz
 .env
 README.md
+.cache
+pipeline

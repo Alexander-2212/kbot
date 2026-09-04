@@ -1,0 +1,37 @@
+# Jenkins Configuration as Code для локального Jenkins із kbot.
+# Створює адміністратора та pipeline-job "kbot", що читає pipeline/jenkins.groovy з GitHub.
+jenkins:
+  systemMessage: "kbot CI - GlobalLogic DEVOPS101, Модуль 6 (Jenkins Pipeline)"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID:-admin}"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "${JENKINS_URL:-http://localhost:8081/}"
+
+jobs:
+  - script: >
+      pipelineJob('kbot') {
+        displayName('kbot - multi-platform build')
+        description('Параметризована мультиплатформенна збірка kbot. Pipeline: pipeline/jenkins.groovy у гілці develop.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('https://github.com/Alexander-2212/kbot.git') }
+                branch('*/develop')
+              }
+            }
+            scriptPath('pipeline/jenkins.groovy')
+            lightweight(true)
+          }
+        }
+      }
