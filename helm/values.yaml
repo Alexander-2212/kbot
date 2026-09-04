@@ -7,7 +7,7 @@ image:
   # напр. ghcr.io/alexander-2212/kbot:v1.0.0-69bd12e-linux-amd64
   registry: "ghcr.io"
   repository: "alexander-2212/kbot"
-  tag: "v1.0.0-a5fe6b7"
+  tag: "v1.0.0-8e37cc5"
   os: linux
   arch: amd64
   pullPolicy: IfNotPresent
