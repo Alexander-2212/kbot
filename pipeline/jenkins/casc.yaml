@@ -22,6 +22,17 @@ jobs:
       pipelineJob('kbot') {
         displayName('kbot - multi-platform build')
         description('Параметризована мультиплатформенна збірка kbot. Pipeline: pipeline/jenkins.groovy у гілці develop.')
+        // Дублюють блок parameters у jenkins.groovy, щоб job був параметризований
+        // одразу після створення (ще до першого запуску pipeline).
+        parameters {
+          choiceParam('OS', ['linux', 'darwin', 'windows'], 'Цільова операційна система (GOOS)')
+          choiceParam('ARCH', ['amd64', 'arm64'], 'Цільова архітектура (GOARCH)')
+          booleanParam('SKIP_TESTS', false, 'Пропустити тести (make test)')
+          booleanParam('SKIP_LINT', false, 'Пропустити лінтер (gofmt, go vet)')
+          booleanParam('BUILD_IMAGE', false, 'Зібрати контейнерний образ (docker buildx); лише для OS=linux')
+          booleanParam('PUSH_IMAGE', false, 'Запушити образ у REGISTRY (потрібні credentials з id ghcr-credentials)')
+          stringParam('RELEASE', 'v1.0.0', 'Префікс версії; VERSION = <RELEASE>-<short SHA>')
+        }
         definition {
           cpsScm {
             scm {
