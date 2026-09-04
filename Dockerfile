@@ -5,8 +5,10 @@ ARG GO_VERSION=1.26
 
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS builder
 
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
+# Без значень за замовчуванням: BuildKit підставляє їх із --platform,
+# а явний --build-arg (Makefile, GitHub Actions) має пріоритет.
+ARG TARGETOS
+ARG TARGETARCH
 ARG VERSION=dev
 
 RUN apk add --no-cache ca-certificates

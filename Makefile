@@ -56,6 +56,8 @@ build:
 image:
 	docker buildx build \
 		--platform $(TARGETOS)/$(TARGETARCH) \
+		--build-arg TARGETOS=$(TARGETOS) \
+		--build-arg TARGETARCH=$(TARGETARCH) \
 		--build-arg VERSION=$(VERSION) \
 		-t $(IMAGE) \
 		--load .
@@ -67,6 +69,8 @@ push:
 image-push:
 	docker buildx build \
 		--platform $(TARGETOS)/$(TARGETARCH) \
+		--build-arg TARGETOS=$(TARGETOS) \
+		--build-arg TARGETARCH=$(TARGETARCH) \
 		--build-arg VERSION=$(VERSION) \
 		-t $(IMAGE) \
 		--push .
