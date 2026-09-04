@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - 'helm/**'
       - 'argocd/**'
+      - 'pipeline/**'
       - '**.md'
       - '.gitignore'
       - '.dockerignore'
