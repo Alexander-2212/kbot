@@ -82,7 +82,7 @@ pipeline {
                     env.BIN     = "${env.APP}-${env.TARGETOS}-${env.TARGETARCH}" + (params.OS == 'windows' ? '.exe' : '')
                     env.IMAGE   = sh(script: 'make -s image-name', returnStdout: true).trim()
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${env.VERSION} ${env.TARGETOS}/${env.TARGETARCH}"
-                    currentBuild.description = "bin: ${env.BIN}" + (params.BUILD_IMAGE ? "<br/>image: ${env.IMAGE}" : '')
+                    currentBuild.description = "bin: ${env.BIN}" + (params.BUILD_IMAGE ? " | image: ${env.IMAGE}" : '')
                 }
                 sh '''
                     go version
