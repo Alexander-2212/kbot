@@ -3,7 +3,7 @@
 // Агент - хост/контейнер, на якому розгорнуто Jenkins (agent any); на ньому мають бути
 // go, make, git і (для стадій Image/Push) docker CLI з доступом до Docker daemon.
 // Підключення: New Item -> Pipeline -> "Pipeline script from SCM" ->
-//   Repository: https://github.com/Alexander-2212/kbot.git, Branch: */develop,
+//   Repository: https://github.com/okaminskyidevops/kbot.git, Branch: */develop,
 //   Script Path: pipeline/jenkins.groovy
 //
 // Розробник обирає параметри збірки у формі "Build with Parameters" або
@@ -61,7 +61,7 @@ pipeline {
     environment {
         APP         = 'kbot'
         REGISTRY    = 'ghcr.io'
-        REPOSITORY  = 'alexander-2212/kbot'
+        REPOSITORY  = 'okaminskyidevops/kbot'
         TARGETOS    = "${params.OS}"
         TARGETARCH  = "${params.ARCH}"
         RELEASE     = "${params.RELEASE}"

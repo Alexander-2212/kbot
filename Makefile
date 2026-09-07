@@ -3,7 +3,7 @@ APP        ?= kbot
 BIN        ?= $(APP)
 # Реєстр і репозиторій образу: ghcr.io/<owner>/<app> (ghcr вимагає нижній регістр)
 REGISTRY   ?= ghcr.io
-OWNER      ?= alexander-2212
+OWNER      ?= okaminskyidevops
 REPOSITORY ?= $(OWNER)/$(APP)
 
 # Версія = <реліз>-<короткий SHA коміту>, напр. v1.0.0-106879e
@@ -15,7 +15,7 @@ VERSION    ?= $(RELEASE)-$(COMMIT)
 TARGETOS   ?= linux
 TARGETARCH ?= amd64
 
-# Повне посилання на образ: ghcr.io/alexander-2212/kbot:v1.0.0-106879e-linux-amd64
+# Повне посилання на образ: ghcr.io/okaminskyidevops/kbot:v1.0.0-106879e-linux-amd64
 IMAGE       = $(REGISTRY)/$(REPOSITORY):$(VERSION)-$(TARGETOS)-$(TARGETARCH)
 
 CHART_DIR  ?= helm
@@ -49,7 +49,7 @@ test:
 # Бінарник під цільову платформу
 build:
 	CGO_ENABLED=0 GOOS=$(TARGETOS) GOARCH=$(TARGETARCH) go build -trimpath \
-		-ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=$(VERSION)" \
+		-ldflags "-s -w -X github.com/okaminskyidevops/kbot/cmd.appVersion=$(VERSION)" \
 		-o $(BIN) .
 
 # Образ під цільову платформу

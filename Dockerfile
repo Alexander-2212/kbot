@@ -20,7 +20,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath \
-      -ldflags "-s -w -X github.com/Alexander-2212/kbot/cmd.appVersion=${VERSION}" \
+      -ldflags "-s -w -X github.com/okaminskyidevops/kbot/cmd.appVersion=${VERSION}" \
       -o /out/kbot .
 
 FROM scratch
@@ -28,8 +28,8 @@ FROM scratch
 ARG VERSION=dev
 
 # OCI-мітки: source лінкує пакет у ghcr.io з цим репозиторієм
-LABEL org.opencontainers.image.source="https://github.com/Alexander-2212/kbot" \
-      org.opencontainers.image.url="https://github.com/Alexander-2212/kbot" \
+LABEL org.opencontainers.image.source="https://github.com/okaminskyidevops/kbot" \
+      org.opencontainers.image.url="https://github.com/okaminskyidevops/kbot" \
       org.opencontainers.image.title="kbot" \
       org.opencontainers.image.description="Telegram bot written in Go (GlobalLogic DEVOPS101)" \
       org.opencontainers.image.version="${VERSION}" \

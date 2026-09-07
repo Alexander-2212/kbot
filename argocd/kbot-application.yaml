@@ -19,7 +19,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/Alexander-2212/kbot.git
+    repoURL: https://github.com/okaminskyidevops/kbot.git
     targetRevision: develop
     path: helm
     helm:

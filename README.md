@@ -36,7 +36,7 @@ flowchart TD
         bump --> commit["git commit + push<br/>ci: bump image tag [skip ci]"]
     end
 
-    img -->|push| ghcr[("ghcr.io/alexander-2212/kbot<br/>:v1.0.0-&lt;sha&gt;-linux-amd64")]
+    img -->|push| ghcr[("ghcr.io/okaminskyidevops/kbot<br/>:v1.0.0-&lt;sha&gt;-linux-amd64")]
     commit --> chart["helm/values.yaml<br/>image.tag оновлено"]
 
     chart -->|"polling / webhook"| argo["ArgoCD Application<br/>path: helm, revision: develop"]
@@ -64,13 +64,13 @@ flowchart TD
 | Event | `push` у гілку `develop` |
 | Платформа / архітектура | `linux` / `amd64` |
 
-Результуючий образ: `ghcr.io/alexander-2212/kbot:v1.0.0-<short-sha>-linux-amd64`,
+Результуючий образ: `ghcr.io/okaminskyidevops/kbot:v1.0.0-<short-sha>-linux-amd64`,
 що відповідає полям `image` у [`helm/values.yaml`](helm/values.yaml):
 
 ```yaml
 image:
   registry: "ghcr.io"
-  repository: "alexander-2212/kbot"
+  repository: "okaminskyidevops/kbot"
   tag: "v1.0.0-<short-sha>"
   os: linux
   arch: amd64
@@ -94,7 +94,7 @@ image:
 ## Jenkins Pipeline (параметризована мультиплатформенна збірка)
 
 Декларативний pipeline - [`pipeline/jenkins.groovy`](pipeline/jenkins.groovy)
-(RAW: <https://raw.githubusercontent.com/Alexander-2212/kbot/develop/pipeline/jenkins.groovy>).
+(RAW: <https://raw.githubusercontent.com/okaminskyidevops/kbot/develop/pipeline/jenkins.groovy>).
 Агент збірки - хост/контейнер, на якому розгорнуто Jenkins (`agent any`), тому на ньому
 мають бути `go`, `make`, `git` і, для стадій `Image`/`Push`, `docker` з доступом до daemon.
 
@@ -158,7 +158,7 @@ docker run -d --name kbot-jenkins -p 8081:8080 \
 ```
 
 Ручне створення job без JCasC: *New Item -> Pipeline -> Pipeline script from SCM*,
-Repository `https://github.com/Alexander-2212/kbot.git`, Branch `*/develop`,
+Repository `https://github.com/okaminskyidevops/kbot.git`, Branch `*/develop`,
 Script Path `pipeline/jenkins.groovy`. Після першого запуску (або *Scan*) Jenkins
 зчитує блок `parameters` і кнопка *Build Now* стає *Build with Parameters*.
 
@@ -195,7 +195,7 @@ kubectl -n kbot create secret docker-registry ghcr   --docker-server=ghcr.io --d
 
 ```bash
 make help          # список цілей і поточні змінні
-make image-name    # ghcr.io/alexander-2212/kbot:v1.0.0-<sha>-linux-amd64
+make image-name    # ghcr.io/okaminskyidevops/kbot:v1.0.0-<sha>-linux-amd64
 make build         # бінарник під linux/amd64
 make image         # образ локально
 make image-push    # зібрати і запушити в ghcr.io
@@ -217,7 +217,7 @@ helm upgrade --install kbot helm   --namespace kbot --create-namespace   --set t
 | Параметр | За замовчуванням | Опис |
 |---|---|---|
 | `image.registry` | `ghcr.io` | реєстр образу |
-| `image.repository` | `alexander-2212/kbot` | репозиторій образу |
+| `image.repository` | `okaminskyidevops/kbot` | репозиторій образу |
 | `image.tag` | `v1.0.0-<sha>` | тег, оновлюється CI |
 | `image.os` / `image.arch` | `linux` / `amd64` | суфікс платформи в тезі |
 | `tele.existingSecret` | `kbot-token` | наявний Secret із токеном |
