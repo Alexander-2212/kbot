@@ -37,7 +37,7 @@ jobs:
           cpsScm {
             scm {
               git {
-                remote { url('https://github.com/okaminskyidevops/kbot.git') }
+                remote { url('https://github.com/Alexander-2212/kbot.git') }
                 branch('*/develop')
               }
             }

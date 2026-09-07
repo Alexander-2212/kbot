@@ -9,12 +9,12 @@ version: 1.1.0
 # Версія застосунку (тег образу за замовчуванням)
 appVersion: "v1.0.0"
 
-home: https://github.com/okaminskyidevops/kbot
+home: https://github.com/Alexander-2212/kbot
 sources:
-  - https://github.com/okaminskyidevops/kbot
+  - https://github.com/Alexander-2212/kbot
 keywords:
   - telegram
   - bot
   - golang
 maintainers:
-  - name: okaminskyidevops
+  - name: Alexander-2212

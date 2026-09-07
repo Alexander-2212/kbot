@@ -4,9 +4,9 @@ replicaCount: 1
 image:
   # Повне посилання на образ збирається як
   # <registry>/<repository>:<tag>-<os>-<arch>
-  # напр. ghcr.io/okaminskyidevops/kbot:v1.0.0-69bd12e-linux-amd64
+  # напр. ghcr.io/alexander-2212/kbot:v1.0.0-69bd12e-linux-amd64
   registry: "ghcr.io"
-  repository: "okaminskyidevops/kbot"
+  repository: "alexander-2212/kbot"
   tag: "v1.0.0-dc56ccd"
   os: linux
   arch: amd64

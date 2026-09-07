@@ -1,6 +1,6 @@
 package main
 
-import "github.com/okaminskyidevops/kbot/cmd"
+import "github.com/Alexander-2212/kbot/cmd"
 
 func main() {
 	cmd.Execute()

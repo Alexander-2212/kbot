@@ -1,4 +1,4 @@
-module github.com/okaminskyidevops/kbot
+module github.com/Alexander-2212/kbot
 
 go 1.26.5
 
