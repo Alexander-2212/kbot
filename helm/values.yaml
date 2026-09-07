@@ -7,7 +7,7 @@ image:
   # напр. ghcr.io/okaminskyidevops/kbot:v1.0.0-69bd12e-linux-amd64
   registry: "ghcr.io"
   repository: "okaminskyidevops/kbot"
-  tag: "v1.0.0-176b10e"
+  tag: "v1.0.0-dc56ccd"
   os: linux
   arch: amd64
   pullPolicy: IfNotPresent
