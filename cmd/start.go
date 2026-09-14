@@ -13,6 +13,10 @@ import (
 
 var TeleToken = os.Getenv("TELE_TOKEN")
 
+// startedAt is when this process started, reported by /uptime. After a
+// rollout it shows how long the new pod has been serving.
+var startedAt = time.Now()
+
 var startCmd = &cobra.Command{
 	Use:     "start",
 	Aliases: []string{"kbot"},
@@ -51,8 +55,10 @@ func textHandler(m telebot.Context) error {
 		return m.Send("pong")
 	case "/time", "time":
 		return m.Send(time.Now().Format(time.RFC1123))
+	case "/uptime", "uptime":
+		return m.Send(fmt.Sprintf("up %s, version %s", time.Since(startedAt).Round(time.Second), appVersion))
 	case "/help", "help":
-		return m.Send("Available commands:\nhello — greeting\nping — pong\nversion — bot version\ntime — current server time\nhelp — this message")
+		return m.Send("Available commands:\nhello — greeting\nping — pong\nversion — bot version\ntime — current server time\nuptime — time since start and version\nhelp — this message")
 	default:
 		return m.Send(fmt.Sprintf("Unknown command: %q\nTry /help", payload))
 	}
