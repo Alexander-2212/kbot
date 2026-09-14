@@ -2,7 +2,7 @@
 
 Telegram-бот на Go для курсу GlobalLogic DEVOPS101.
 Репозиторій містить код бота, `Dockerfile`, `Makefile`, Helm-чарт і повний
-CI/CD-конвеєр (GitHub Actions -> ghcr.io -> ArgoCD -> Kubernetes).
+CI/CD-конвеєр (GitHub Actions -> ghcr.io -> Flux -> Kubernetes).
 
 Бот: [t.me/devops101KaminskyiOV_bot](https://t.me/devops101KaminskyiOV_bot)
 
@@ -12,12 +12,12 @@ CI/CD-конвеєр (GitHub Actions -> ghcr.io -> ArgoCD -> Kubernetes).
 - [telebot.v4](https://gopkg.in/telebot.v4) - Telegram Bot API
 - GitHub Actions, Jenkins - CI/CD
 - ghcr.io - реєстр контейнерів
-- Helm + ArgoCD - GitOps-розгортання в Kubernetes
+- Helm + Flux - GitOps-розгортання в Kubernetes
 
 ## CI/CD
 
 Схема автоматизованого циклу: комміт у `develop` -> збірка й публікація образу
-в `ghcr.io` -> оновлення тегу в Helm-чарті -> автоматичний sync ArgoCD у кластер.
+в `ghcr.io` -> оновлення тегу в Helm-чарті -> автоматичний sync Flux у кластер.
 
 ```mermaid
 flowchart TD
@@ -39,7 +39,7 @@ flowchart TD
     img -->|push| ghcr[("ghcr.io/alexander-2212/kbot<br/>:v1.0.0-&lt;sha&gt;-linux-amd64")]
     commit --> chart["helm/values.yaml<br/>image.tag оновлено"]
 
-    chart -->|"polling / webhook"| argo["ArgoCD Application<br/>path: helm, revision: develop"]
+    chart -->|"polling / webhook"| argo["Flux Application<br/>path: helm, revision: develop"]
     argo -->|"auto-sync, self-heal"| k8s
 
     subgraph k8s["Kubernetes - namespace kbot"]
@@ -59,7 +59,7 @@ flowchart TD
 |---|---|
 | CI/CD | GitHub Actions |
 | Container Registry | `ghcr.io` |
-| Deploy | ArgoCD |
+| Deploy | Flux |
 | Infrastructure | Kubernetes |
 | Event | `push` у гілку `develop` |
 | Платформа / архітектура | `linux` / `amd64` |
@@ -162,9 +162,9 @@ Repository `https://github.com/Alexander-2212/kbot.git`, Branch `*/develop`,
 Script Path `pipeline/jenkins.groovy`. Після першого запуску (або *Scan*) Jenkins
 зчитує блок `parameters` і кнопка *Build Now* стає *Build with Parameters*.
 
-## Розгортання через ArgoCD
+## Розгортання через Flux
 
-Маніфест Application - [`argocd/kbot-application.yaml`](argocd/kbot-application.yaml).
+Маніфест Application - [`flux/kbot-application.yaml`](flux/kbot-application.yaml).
 
 ```bash
 # 1. Токен бота (у git не зберігається)
@@ -172,16 +172,16 @@ kubectl create namespace kbot
 kubectl -n kbot create secret generic kbot-token --from-literal=token=<TELE_TOKEN>
 
 # 2. Application
-kubectl apply -f argocd/kbot-application.yaml
+kubectl apply -f flux/kbot-application.yaml
 
 # 3. Стан
-kubectl -n argocd get application kbot
+kubectl -n flux get application kbot
 kubectl -n kbot get pods
 kubectl -n kbot logs -l app.kubernetes.io/instance=kbot -f
 # authorized as @devops101KaminskyiOV_bot, version v1.0.0-<sha>
 ```
 
-ArgoCD працює в режимі `automated` + `selfHeal`, тож після комміту нового тегу
+Flux працює в режимі `automated` + `selfHeal`, тож після комміту нового тегу
 в `values.yaml` нова версія бота розкочується без ручних дій.
 
 Якщо пакет у `ghcr.io` приватний, додайте pull-секрет:
@@ -206,7 +206,7 @@ make helm-lint     # helm lint
 Версія вшивається в бінарник через `-ldflags -X ...cmd.appVersion`, тож
 `kbot version` показує ту саму версію, що й тег образу.
 
-## Ручне встановлення чарту (без ArgoCD)
+## Ручне встановлення чарту (без Flux)
 
 ```bash
 helm upgrade --install kbot helm   --namespace kbot --create-namespace   --set tele.existingSecret=kbot-token
@@ -239,3 +239,13 @@ helm upgrade --install kbot helm   --namespace kbot --create-namespace   --set t
 export TELE_TOKEN=<your_bot_token>
 go build -o kbot . && ./kbot start
 ```
+
+## Deployment (Flux)
+
+The cluster side lives in
+[flux-gitops](https://github.com/Alexander-2212/flux-gitops): a `GitRepository`
+on the `develop` branch of this repo and a `HelmRelease` for `./helm`.
+Every CI run commits a new `image.tag` to `helm/values.yaml`; Flux notices the
+new revision and upgrades the release. Infrastructure (kind, GKE, Flux
+bootstrap) is in
+[devops101-m07-infrastructure](https://github.com/Alexander-2212/devops101-m07-infrastructure).
