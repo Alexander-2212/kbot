@@ -55,10 +55,18 @@ func textHandler(m telebot.Context) error {
 		return m.Send("pong")
 	case "/time", "time":
 		return m.Send(time.Now().Format(time.RFC1123))
+	case "/host", "host":
+		// In Kubernetes HOSTNAME is the pod name, so this shows which pod (and,
+		// after a rollout, which ReplicaSet) is serving the bot.
+		host, err := os.Hostname()
+		if err != nil {
+			host = "unknown"
+		}
+		return m.Send(fmt.Sprintf("%s, version %s", host, appVersion))
 	case "/uptime", "uptime":
 		return m.Send(fmt.Sprintf("up %s, version %s", time.Since(startedAt).Round(time.Second), appVersion))
 	case "/help", "help":
-		return m.Send("Available commands:\nhello — greeting\nping — pong\nversion — bot version\ntime — current server time\nuptime — time since start and version\nhelp — this message")
+		return m.Send("Available commands:\nhello — greeting\nping — pong\nversion — bot version\ntime — current server time\nuptime — time since start and version\nhost — pod serving this bot\nhelp — this message")
 	default:
 		return m.Send(fmt.Sprintf("Unknown command: %q\nTry /help", payload))
 	}
