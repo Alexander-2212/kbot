@@ -42,6 +42,29 @@ spec:
                 secretKeyRef:
                   name: {{ include "kbot.secretName" . }}
                   key: {{ .Values.tele.secretKey }}
+            {{- with .Values.otel.endpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ . | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ include "kbot.name" $ }}
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: {{ $.Values.otel.metricExportInterval | quote }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            # Атрибути ресурсу лінкують трейси й метрики з подом, де працює бот
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.pod.name=$(POD_NAME),k8s.namespace.name=$(POD_NAMESPACE),k8s.node.name=$(NODE_NAME){{ with $.Values.otel.resourceAttributes }},{{ . }}{{ end }}"
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources:

@@ -1,10 +1,10 @@
 apiVersion: v2
 name: kbot
-description: Helm chart for kbot - Telegram bot written in Go (GlobalLogic DEVOPS101, Module 6, GitOps)
+description: Helm chart for kbot - Telegram bot written in Go (GlobalLogic DEVOPS101, GitOps + OpenTelemetry)
 type: application
 
 # Версія чарту
-version: 1.1.0
+version: 1.2.0
 
 # Версія застосунку (тег образу за замовчуванням)
 appVersion: "v1.0.0"

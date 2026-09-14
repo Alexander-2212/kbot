@@ -28,6 +28,15 @@ tele:
   # Ключ усередині Secret, у якому лежить токен
   secretKey: token
 
+# OpenTelemetry: трейси і метрики по OTLP/gRPC. Порожній endpoint - експорт вимкнено.
+otel:
+  # напр. http://otel-collector.monitoring:4317
+  endpoint: ""
+  # Інтервал відправки метрик, мс
+  metricExportInterval: 15000
+  # Додаткові атрибути ресурсу, через кому: key=value,key2=value2
+  resourceAttributes: ""
+
 podAnnotations: {}
 podLabels: {}
 
